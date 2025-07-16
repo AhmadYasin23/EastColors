@@ -1,3 +1,4 @@
+export const revalidate = 60;
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/home/hero-section"
 import { FeaturesSection } from "@/components/home/features-section"

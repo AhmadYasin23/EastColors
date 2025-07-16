@@ -1,4 +1,5 @@
 // components/home/StatsSection.tsx
+export const revalidate = 60;
 import { groq } from "next-sanity"
 import { client } from "@/sanity/lib/client"
 import StatsClient from "./stats-client"
