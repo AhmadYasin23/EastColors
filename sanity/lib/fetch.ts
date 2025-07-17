@@ -9,6 +9,9 @@ import {
   featuredBlogPostsQuery,
   blogPostBySlugQuery,
   categoriesQuery,
+  jobsQuery,
+  jobBySlugQuery,
+  featuredJobsQuery,
 } from "./queries"
 
 // Projects
@@ -49,4 +52,17 @@ export async function getBlogPostBySlug(slug: string) {
 // Categories
 export async function getCategories() {
   return await client.fetch(categoriesQuery)
+}
+
+// Jobs
+export async function getJobs() {
+  return await client.fetch(jobsQuery)
+}
+
+export async function getJobBySlug(slug: string) {
+  return await client.fetch(jobBySlugQuery, { slug })
+}
+
+export async function getFeaturedJobs() {
+  return await client.fetch(featuredJobsQuery)
 }

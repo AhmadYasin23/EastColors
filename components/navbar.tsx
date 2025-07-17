@@ -18,6 +18,7 @@ export function Navbar() {
       { href: "/about", label: "من نحن" },
       { href: "/services", label: "خدماتنا" },
       { href: "/portfolio", label: "معرض الأعمال" },
+      { href: "/careers", label: "الوظائف" },
       { href: "/contact", label: "اتصل بنا" },
     ],
     en: [
@@ -25,6 +26,7 @@ export function Navbar() {
       { href: "/about", label: "About Us" },
       { href: "/services", label: "Services" },
       { href: "/portfolio", label: "Portfolio" },
+      { href: "/careers", label: "Careers" },
       { href: "/contact", label: "Contact Us" },
     ],
   };

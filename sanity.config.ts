@@ -36,6 +36,9 @@ export default defineConfig({
             S.listItem()
               .title("Client Logos")
               .child(S.documentTypeList("clientLogo").title("Client Logos")),
+            S.listItem()
+              .title("Job Title")
+              .child(S.documentTypeList("job").title("Job Title")),
           ]),
     }),
     visionTool({ defaultApiVersion: apiVersion }),

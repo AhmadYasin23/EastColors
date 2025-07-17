@@ -153,3 +153,58 @@ export const categoriesQuery = groq`
     description
   }
 `
+
+// Jobs queries
+export const jobsQuery = groq`
+  *[_type == "job" && active == true] | order(featured desc, order asc, publishedAt desc) {
+    _id,
+    title,
+    slug,
+    department,
+    location,
+    type,
+    salary,
+    experience,
+    description,
+    requirements,
+    responsibilities,
+    featured,
+    applicationDeadline,
+    publishedAt
+  }
+`
+
+export const jobBySlugQuery = groq`
+  *[_type == "job" && slug.current == $slug && active == true][0] {
+    _id,
+    title,
+    slug,
+    department,
+    location,
+    type,
+    salary,
+    experience,
+    description,
+    requirements,
+    responsibilities,
+    featured,
+    applicationDeadline,
+    publishedAt
+  }
+`
+
+export const featuredJobsQuery = groq`
+  *[_type == "job" && active == true && featured == true] | order(order asc, publishedAt desc) {
+    _id,
+    title,
+    slug,
+    department,
+    location,
+    type,
+    salary,
+    experience,
+    description,
+    featured,
+    publishedAt
+  }
+`
