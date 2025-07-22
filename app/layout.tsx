@@ -14,7 +14,7 @@ const tajawal = Tajawal({
 
 export const metadata: Metadata = {
   title: "East Colors - ألوان الشرق",
-  description: "Leading design and advertising company in Saudi Arabia",
+  description: "Leading design and advertising company in Jordan",
     generator: 'AhmadYasin'
 }
 
