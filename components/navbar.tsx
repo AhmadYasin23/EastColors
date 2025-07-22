@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/language-context";
 import Image from "next/image";
-import ECLogo from "./EC_Logo.png" 
+import ECLogo from "./EC_Logo_3.png";
 
 export function Navbar() {
   const { language, toggleLanguage } = useLanguage();
@@ -37,28 +37,19 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80  backdrop-blur-sm border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200 py-4">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-18">
+        <div className="flex items-center justify-between h-13">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            {/* Plain HTML <img> */}
-            <div className="w-14 h-14 rounded-lg flex items-center justify-center">
+          <Link href="/" className="flex items-center space-x-4">
+            <div className="w-25 h-25 flex items-center justify-center mr-4">
               <Image
                 src={ECLogo}
                 alt="EC Logo"
-                width={120}
-                height={120}
+                width={176}
+                height={176}
                 className="object-contain"
               />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-lexend text-gray-600 mx-3">
-                {language === "ar" ? "ألوان الشرق" : "East Colors"}
-              </span>
-              <span className="text-sm font-lexend text-gray-600 mx-3">
-                {language === "ar" ? "East Colors" : "ألوان الشرق"}
-              </span>
             </div>
           </Link>
 
@@ -71,7 +62,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`ml-6 transition-colors font-medium mx-3 ${
+                className={`transition-colors font-medium mx-3 ${
                   isActive(item.href)
                     ? "text-pink-600 border-b-2 border-pink-600 pb-1"
                     : "text-gray-700 hover:text-pink-600"
@@ -91,7 +82,7 @@ export function Navbar() {
               className="flex items-center space-x-1"
             >
               <Globe className="w-4 h-4" />
-              <span className="text-sm">
+              <span className="text-md">
                 {language === "ar" ? "EN" : "عربي"}
               </span>
             </Button>
