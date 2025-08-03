@@ -98,7 +98,7 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
               dots={false}
               pauseOnHover={false}
               swipe={false}
-              adaptiveHeight
+
             >
             {logos.map((logo, i) => (
               <div
@@ -108,7 +108,9 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
                 <img
                   src={logo.logoUrl}
                   alt={logo.name}
-                  className="max-w-50 max-h-40 lg:max-w-full lg:max-h-full object-contain"
+                  width={564}
+                  height={184}
+                  className="max-w-50 max-h-40 md:max-w-full lg:max-h-full object-contain"
                 />
               </div>
             ))}
