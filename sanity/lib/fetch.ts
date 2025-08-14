@@ -1,3 +1,4 @@
+import { groq } from "next-sanity"
 import { client } from "./client"
 import {
   projectsQuery,
@@ -28,8 +29,22 @@ export async function getProjectBySlug(slug: string) {
 }
 
 // Services
-export async function getServices() {
-  return await client.fetch(servicesQuery)
+export async function getServices(category?: string) {
+  let query
+  let params = {}
+
+  if (category) {
+    query = groq`*[_type == "service" && category == $category] | order(order asc) {
+      _id, title, slug, description, icon, features, image, featured, category
+    }`
+    params = { category }
+  } else {
+    query = groq`*[_type == "service"] | order(order asc) {
+      _id, title, slug, description, icon, features, image, featured, category
+    }`
+  }
+
+  return client.fetch(query, params)
 }
 
 export async function getServiceBySlug(slug: string) {

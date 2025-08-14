@@ -16,7 +16,7 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
   if (!logos || logos.length === 0) return null;
 
   const { language } = useLanguage();
-  const slidesToShow = useSlidesToShow();     // ← always called
+  const slidesToShow = useSlidesToShow(); // ← always called
   const [sliderVisible, setSliderVisible] = useState(false);
   useEffect(() => {
     setSliderVisible(true);
@@ -42,8 +42,6 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
       ],
     },
   }[language];
-
-
 
   return (
     <section className="py-20 bg-gradient-to-r from-pink-500 via-indigo-500 to-cyan-500 overflow-hidden">
@@ -98,23 +96,20 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
               dots={false}
               pauseOnHover={false}
               swipe={false}
-
             >
-            {logos.map((logo, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-center w-full h-full rounded-lg overflow-hidden"
-              >
-                <img
-                  src={logo.logoUrl}
-                  alt={logo.name}
-                  width={564}
-                  height={184}
-                  className="max-w-50 max-h-40 md:max-w-full lg:max-h-full object-contain"
-                />
-              </div>
-            ))}
-          </Slider>
+              {logos.map((logo, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-center w-full h-32 md:h-32 lg:h-36 px-2"
+                >
+                  <img
+                    src={`${logo.logoUrl}?h=140&fit=max`}
+                    alt={logo.name}
+                    className="max-h-full max-w-full object-contain pt-6 m-2"
+                  />
+                </div>
+              ))}
+            </Slider>
           )}
         </div>
       </div>

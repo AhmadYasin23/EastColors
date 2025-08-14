@@ -1,27 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useLanguage } from "@/contexts/language-context"
-import * as Icons from "lucide-react"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/language-context";
+import * as Icons from "lucide-react";
 
 interface Service {
-  _id: string
-  title: { ar: string; en: string }
-  slug: { current: string }
-  description: { ar: string; en: string }
-  icon: string
-  features: { ar: string[]; en: string[] }
-  image?: any
-  featured: boolean
+  _id: string;
+  title: { ar: string; en: string };
+  slug: { current: string };
+  description: { ar: string; en: string };
+  icon: string;
+  features: { ar: string[]; en: string[] };
+  image?: any;
+  featured: boolean;
+  category?: string; // new
 }
 
-export function DynamicServicesGrid() {
-  const { language } = useLanguage()
-  const [services, setServices] = useState<Service[]>([])
-  const [loading, setLoading] = useState(true)
+interface Props {
+  category?: "production" | "promotions"; // optional filter
+}
+
+export function DynamicServicesGrid({ category }: Props) {
+  const { language } = useLanguage();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const content = {
     ar: {
@@ -32,23 +37,27 @@ export function DynamicServicesGrid() {
       cta: "Request Service",
       learnMore: "Learn More",
     },
-  }
+  };
 
   useEffect(() => {
     async function fetchServices() {
       try {
-        const response = await fetch("/api/sanity/services")
-        const data = await response.json()
-        setServices(data)
+        const url = category
+          ? `/api/sanity/services?category=${category}`
+          : `/api/sanity/services`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+        setServices(data);
       } catch (error) {
-        console.error("Error fetching services:", error)
+        console.error("Error fetching services:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchServices()
-  }, [])
+    fetchServices();
+  }, [category]);
 
   if (loading) {
     return (
@@ -71,7 +80,7 @@ export function DynamicServicesGrid() {
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   return (
@@ -79,8 +88,7 @@ export function DynamicServicesGrid() {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => {
-            // Get the icon component dynamically
-            const IconComponent = (Icons as any)[service.icon] || Icons.Star
+            const IconComponent = (Icons as any)[service.icon] || Icons.Star;
 
             return (
               <Card
@@ -97,13 +105,18 @@ export function DynamicServicesGrid() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-gray-600 leading-relaxed">
-                    {language === "ar" ? service.description.ar : service.description.en}
+                    {language === "ar"
+                      ? service.description.ar
+                      : service.description.en}
                   </p>
 
-                  {service.features && service.features[language] && (
+                  {service.features?.[language] && (
                     <ul className="space-y-2">
                       {service.features[language].slice(0, 3).map((feature, index) => (
-                        <li key={index} className="flex items-center text-sm text-gray-600">
+                        <li
+                          key={index}
+                          className="flex items-center text-sm text-gray-600"
+                        >
                           <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-indigo-600 rounded-full mr-3"></div>
                           {feature}
                         </li>
@@ -125,10 +138,10 @@ export function DynamicServicesGrid() {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

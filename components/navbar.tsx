@@ -16,7 +16,14 @@ export function Navbar() {
     ar: [
       { href: "/", label: "الصفحة الرئيسية" },
       { href: "/about", label: "من نحن" },
-      { href: "/services", label: "خدماتنا" },
+      {
+        href: "/services",
+        label: "خدماتنا",
+        children: [
+          { href: "/services/production", label: "الإنتاج" },
+          { href: "/services/promotions", label: "الترويج" },
+        ],
+      },
       { href: "/portfolio", label: "معرض الأعمال" },
       { href: "/clients", label: "عملاؤنا" },
       { href: "/careers", label: "الوظائف" },
@@ -25,7 +32,14 @@ export function Navbar() {
     en: [
       { href: "/", label: "Home" },
       { href: "/about", label: "About Us" },
-      { href: "/services", label: "Services" },
+      {
+        href: "/services",
+        label: "Services",
+        children: [
+          { href: "/services/production", label: "Production" },
+          { href: "/services/promotions", label: "Promotions" },
+        ],
+      },
       { href: "/portfolio", label: "Portfolio" },
       { href: "/clients", label: "Our Clients" },
       { href: "/careers", label: "Careers" },
@@ -60,19 +74,53 @@ export function Navbar() {
             className="hidden lg:flex items-center space-x-8"
             dir={language === "ar" ? "rtl" : "ltr"}
           >
-            {navItems[language].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`transition-colors font-medium mx-3 ${
-                  isActive(item.href)
-                    ? "text-pink-600 border-b-2 border-pink-600 pb-1"
-                    : "text-gray-700 hover:text-pink-600"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems[language].map((item) =>
+              item.children ? (
+                <div key={item.href} className="relative group">
+                  <Link
+                    href={item.href}
+                    className={`transition-colors font-medium mx-3 ${
+                      isActive(item.href)
+                        ? "text-pink-600 border-b-2 border-pink-600 pb-1"
+                        : "text-gray-700 hover:text-pink-600"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+
+                  {/* Submenu */}
+                  <div
+                    className="absolute left-0 top-full mt-0 hidden group-hover:block bg-white border shadow-md"
+                    onMouseEnter={(e) => e.currentTarget.classList.add("block")}
+                    onMouseLeave={(e) =>
+                      e.currentTarget.classList.remove("block")
+                    }
+                  >
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className="block px-4 py-2 hover:bg-gray-100 text-gray-700 whitespace-nowrap"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`transition-colors font-medium mx-3 ${
+                    isActive(item.href)
+                      ? "text-pink-600 border-b-2 border-pink-600 pb-1"
+                      : "text-gray-700 hover:text-pink-600"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </div>
 
           {/* Language Toggle & CTA */}
@@ -110,24 +158,45 @@ export function Navbar() {
                   className="flex flex-col space-y-4 mt-8"
                   dir={language === "ar" ? "rtl" : "ltr"}
                 >
-                  {navItems[language].map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`transition-colors font-medium py-2 ${
-                        isActive(item.href)
-                          ? "text-pink-600"
-                          : "text-gray-700 hover:text-pink-600"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                  <Link href="/contact">
-                    <Button className="mt-4 w-full bg-gradient-to-r from-pink-500 to-indigo-600">
-                      {language === "ar" ? "طلب عرض سعر" : "Get Quote"}
-                    </Button>
-                  </Link>
+                  {navItems[language].map((item) =>
+                    item.children ? (
+                      <div key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={`transition-colors font-medium py-2 ${
+                            isActive(item.href)
+                              ? "text-pink-600"
+                              : "text-gray-700 hover:text-pink-600"
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                        <div className="ml-4 flex flex-col space-y-2">
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className="text-gray-500 hover:text-pink-600"
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`transition-colors font-medium py-2 ${
+                          isActive(item.href)
+                            ? "text-pink-600"
+                            : "text-gray-700 hover:text-pink-600"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    )
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

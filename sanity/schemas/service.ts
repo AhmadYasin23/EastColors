@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export default defineType({
   name: "service",
@@ -33,6 +33,19 @@ export default defineType({
         maxLength: 96,
       },
     }),
+    defineField({
+      name: "category",
+      title: "Category",
+      type: "string",
+      options: {
+        list: [
+          { title: "Production", value: "production" },
+          { title: "Promotions", value: "promotions" },
+        ],
+        layout: "dropdown", // ✅ no warning
+      },
+    }),
+
     defineField({
       name: "description",
       title: "Description",
@@ -142,12 +155,12 @@ export default defineType({
       order: "order",
     },
     prepare(selection) {
-      const { title, order } = selection
+      const { title, order } = selection;
       return {
         title,
         subtitle: `Order: ${order}`,
         media: selection.media,
-      }
+      };
     },
   },
-})
+});
