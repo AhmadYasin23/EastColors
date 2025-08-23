@@ -1,74 +1,90 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useLanguage } from "@/contexts/language-context"
-import { urlForImage } from "@/sanity/lib/image"
+import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/language-context";
+import { urlForImage } from "@/sanity/lib/image";
 
-type Category = "all" | "digital" | "printing" | "design" | "signage" | "vehicle"
+type Category =
+  | "all"
+  | "digital"
+  | "printing"
+  | "design"
+  | "signage"
+  | "vehicle";
 
 interface Project {
-  _id: string
-  title: { ar: string; en: string }
-  slug: { current: string }
-  description?: { ar: string; en: string }
-  category: string
-  mainImage: any
+  _id: string;
+  title: { ar: string; en: string };
+  slug: { current: string };
+  description?: { ar: string; en: string };
+  category: string;
+  mainImage: any;
   client?: {
-    name: string
-    industry: string
-  }
-  completionDate?: string
+    name: string;
+    industry: string;
+  };
+  completionDate?: string;
 }
 
 export function DynamicPortfolioGrid() {
-  const { language } = useLanguage()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeCat, setActiveCat] = useState<Category>("all")
+  const { language } = useLanguage();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCat, setActiveCat] = useState<Category>("all");
 
   const categories = {
     ar: [
       { key: "all", label: "الكل" },
-      // { key: "digital", label: "لوحات رقمية" },
-      { key: "printing", label: "طباعة" },
-      { key: "design", label: "تصميم" },
-      { key: "signage", label: "لافتات" },
+      { key: "outdoor", label: "لافتات خارجية" },
+      { key: "indoor", label: "لافتات داخلية" },
+      { key: "promotional", label: "حملات ترويجية" },
+      { key: "booths", label: "الأكشاك وأجنحة المعارض" },
       { key: "vehicle", label: "إعلانات المركبات" },
+      { key: "marketing-materials", label: "تصميم وإنتاج المواد التسويقية" },
+      { key: "design", label: "تصميم" },
     ],
     en: [
       { key: "all", label: "All" },
-      // { key: "digital", label: "Digital" },
-      { key: "printing", label: "Printing" },
-      { key: "design", label: "Design" },
-      { key: "signage", label: "Signage" },
+      { key: "outdoor", label: "Outdoor Signage" },
+      { key: "indoor", label: "Indoor Signage" },
+      { key: "promotional", label: "Promotional Campaigns" },
+      { key: "booths", label: "Booths & Exhibition Stands" },
       { key: "vehicle", label: "Vehicle" },
+      {
+        key: "marketing-materials",
+        label: "Design & Production of Marketing Materials",
+      },
+      { key: "design", label: "Design" },
     ],
-  }
+  };
 
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const response = await fetch("/api/sanity/projects")
-        const data = await response.json()
-        setProjects(data)
+        const response = await fetch("/api/sanity/projects");
+        const data = await response.json();
+        setProjects(data);
       } catch (error) {
-        console.error("Error fetching projects:", error)
+        console.error("Error fetching projects:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchProjects()
-  }, [])
+    fetchProjects();
+  }, []);
 
   const filtered = useMemo(
-    () => (activeCat === "all" ? projects : projects.filter((p) => p.category === activeCat)),
-    [projects, activeCat],
-  )
+    () =>
+      activeCat === "all"
+        ? projects
+        : projects.filter((p) => p.category === activeCat),
+    [projects, activeCat]
+  );
 
   if (loading) {
     return (
@@ -89,14 +105,17 @@ export function DynamicPortfolioGrid() {
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         {/* Category Filters */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12" dir={language === "ar" ? "rtl" : "ltr"}>
+        <div
+          className="flex flex-wrap justify-center gap-3 mb-12"
+          dir={language === "ar" ? "rtl" : "ltr"}
+        >
           {categories[language].map((c) => (
             <Button
               key={c.key}
@@ -117,8 +136,15 @@ export function DynamicPortfolioGrid() {
                 <CardContent className="p-0">
                   <div className="relative overflow-hidden">
                     <Image
-                      src={urlForImage(project.mainImage)?.width(500).height(400).url() || "/placeholder.svg"}
-                      alt={language === "ar" ? project.title.ar : project.title.en}
+                      src={
+                        urlForImage(project.mainImage)
+                          ?.width(500)
+                          .height(400)
+                          .url() || "/placeholder.svg"
+                      }
+                      alt={
+                        language === "ar" ? project.title.ar : project.title.en
+                      }
                       width={500}
                       height={400}
                       className="w-full h-60 object-cover group-hover:scale-110 transition-transform duration-300"
@@ -126,9 +152,15 @@ export function DynamicPortfolioGrid() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-4 left-4 right-4 text-white">
                         <h3 className="text-lg font-bold mb-1">
-                          {language === "ar" ? project.title.ar : project.title.en}
+                          {language === "ar"
+                            ? project.title.ar
+                            : project.title.en}
                         </h3>
-                        {project.client && <p className="text-sm opacity-90">{project.client.name}</p>}
+                        {project.client && (
+                          <p className="text-sm opacity-90">
+                            {project.client.name}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -141,11 +173,13 @@ export function DynamicPortfolioGrid() {
         {filtered.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">
-              {language === "ar" ? "لا توجد مشاريع في هذه الفئة" : "No projects found in this category"}
+              {language === "ar"
+                ? "لا توجد مشاريع في هذه الفئة"
+                : "No projects found in this category"}
             </p>
           </div>
         )}
       </div>
     </section>
-  )
+  );
 }

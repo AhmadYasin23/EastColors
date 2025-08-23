@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export default defineType({
   name: "project",
@@ -59,11 +59,16 @@ export default defineType({
       type: "string",
       options: {
         list: [
-          { title: "Digital Signage", value: "digital" },
-          { title: "Printing", value: "printing" },
+          { title: "Outdoor Signage", value: "outdoor" },
+          { title: "Indoor Signage", value: "indoor" },
+          { title: "Promotional Campaigns", value: "promotional" },
+          { title: "Booths & Exhibition Stands", value: "booths" },
+          { title: "Vehicle", value: "vehicle" },
+          {
+            title: "Design & Production of Marketing Materials",
+            value: "marketing-materials",
+          },
           { title: "Design", value: "design" },
-          { title: "Signage", value: "signage" },
-          { title: "Vehicle Advertising", value: "vehicle" },
         ],
       },
       validation: (Rule) => Rule.required(),
@@ -200,12 +205,12 @@ export default defineType({
       category: "category",
     },
     prepare(selection) {
-      const { title, category } = selection
+      const { title, category } = selection;
       return {
         title,
         subtitle: category ? `Category: ${category}` : "No category",
         media: selection.media,
-      }
+      };
     },
   },
-})
+});
