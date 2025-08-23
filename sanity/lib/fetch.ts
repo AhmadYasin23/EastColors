@@ -1,11 +1,11 @@
-import { groq } from "next-sanity"
-import { client } from "./client"
+// fetch.ts
+import { groq } from "next-sanity";
+import { client } from "./client";
 import {
   projectsQuery,
   featuredProjectsQuery,
   projectBySlugQuery,
-  servicesQuery,
-  serviceBySlugQuery,
+  // removed servicesQuery/serviceBySlugQuery on purpose since we inline normalized queries
   blogPostsQuery,
   featuredBlogPostsQuery,
   blogPostBySlugQuery,
@@ -13,71 +13,126 @@ import {
   jobsQuery,
   jobBySlugQuery,
   featuredJobsQuery,
-} from "./queries"
+} from "./queries";
+
+// ---- Types (optional but recommended)
+export type Lang = "ar" | "en";
+
+export type Service = {
+  _id: string;
+  slug: string; // <-- flat string (normalized)
+  title: { ar: string; en: string };
+  description: { ar: string; en: string };
+  icon?: string | null;
+  features?: { ar?: string[]; en?: string[] } | null;
+  image?: any;
+  featured?: boolean;
+  category?: string;
+};
 
 // Projects
 export async function getProjects() {
-  return await client.fetch(projectsQuery)
+  return client.fetch(projectsQuery);
 }
 
 export async function getFeaturedProjects() {
-  return await client.fetch(featuredProjectsQuery)
+  return client.fetch(featuredProjectsQuery);
 }
 
 export async function getProjectBySlug(slug: string) {
-  return await client.fetch(projectBySlugQuery, { slug })
+  return client.fetch(projectBySlugQuery, { slug });
 }
 
-// Services
-export async function getServices(category?: string) {
-  let query
-  let params = {}
+// Services (NORMALIZED SHAPE)
+export async function getServices(category?: string): Promise<Service[]> {
+  const filter = category ? " && category == $category" : "";
+  const query = groq`*[
+    _type == "service" 
+    && defined(slug.current)
+    ${filter}
+  ] | order(order asc) {
+    _id,
+    icon,
+    image,
+    featured,
+    category,
+    "slug": slug.current,                               // <-- FLAT
+    "title": {
+      "en": coalesce(title.en, ""),
+      "ar": coalesce(title.ar, "")
+    },
+    "description": {
+      "en": coalesce(description.en, ""),
+      "ar": coalesce(description.ar, "")
+    },
+    "features": {
+      "en": coalesce(features.en, []),
+      "ar": coalesce(features.ar, [])
+    }
+  }`;
 
-  if (category) {
-    query = groq`*[_type == "service" && category == $category] | order(order asc) {
-      _id, title, slug, description, icon, features, image, featured, category
-    }`
-    params = { category }
-  } else {
-    query = groq`*[_type == "service"] | order(order asc) {
-      _id, title, slug, description, icon, features, image, featured, category
-    }`
-  }
+  const params = category ? { category } : {};
+  const data = await client.fetch<Service[]>(query, params);
 
-  return client.fetch(query, params)
+  // belt & suspenders: drop any rogue items with empty slug
+  return (Array.isArray(data) ? data : []).filter((s) => typeof s.slug === "string" && s.slug.trim().length > 0);
 }
 
-export async function getServiceBySlug(slug: string) {
-  return await client.fetch(serviceBySlugQuery, { slug })
+export async function getServiceBySlug(slug: string): Promise<Service | null> {
+  const query = groq`*[
+    _type == "service" 
+    && slug.current == $slug
+  ][0]{
+    _id,
+    icon,
+    image,
+    featured,
+    category,
+    "slug": slug.current,                               // <-- FLAT
+    "title": {
+      "en": coalesce(title.en, ""),
+      "ar": coalesce(title.ar, "")
+    },
+    "description": {
+      "en": coalesce(description.en, ""),
+      "ar": coalesce(description.ar, "")
+    },
+    "features": {
+      "en": coalesce(features.en, []),
+      "ar": coalesce(features.ar, [])
+    }
+  }`;
+  const doc = await client.fetch<Service | null>(query, { slug });
+  return doc && typeof doc.slug === "string" ? { ...doc, slug: doc.slug.trim() } : null;
 }
 
 // Blog
 export async function getBlogPosts() {
-  return await client.fetch(blogPostsQuery)
+  return client.fetch(blogPostsQuery);
 }
 
 export async function getFeaturedBlogPosts() {
-  return await client.fetch(featuredBlogPostsQuery)
+  return client.fetch(featuredBlogPostsQuery);
 }
 
 export async function getBlogPostBySlug(slug: string) {
-  return await client.fetch(blogPostBySlugQuery, { slug })
+  return client.fetch(blogPostBySlugQuery, { slug });
 }
 
 // Categories
 export async function getCategories() {
-  return await client.fetch(categoriesQuery)
+  return client.fetch(categoriesQuery);
 }
 
 // Jobs
 export async function getJobs() {
-  return await client.fetch(jobsQuery)
+  return client.fetch(jobsQuery);
 }
 
 export async function getJobBySlug(slug: string) {
-  return await client.fetch(jobBySlugQuery, { slug })
+  return client.fetch(jobBySlugQuery, { slug });
 }
 
 export async function getFeaturedJobs() {
-  return await client.fetch(featuredJobsQuery)
+  return client.fetch(featuredJobsQuery);
 }
