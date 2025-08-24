@@ -1,3 +1,5 @@
+export const revalidate = 60; // rebuild at most once per minute
+
 import { ProjectDetails, ProjectData } from "@/components/ProjectDetails";
 import { groq } from "next-sanity";
 import { client } from "@/sanity/lib/client";
