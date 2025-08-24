@@ -42,7 +42,7 @@ export function DynamicPortfolioGrid() {
       { key: "outdoor", label: "لافتات خارجية" },
       { key: "indoor", label: "لافتات داخلية" },
       { key: "promotional", label: "حملات ترويجية" },
-      { key: "booths", label: "الأكشاك وأجنحة المعارض" },
+      { key: "booths", label: "الستاندات والبوثات" },
       { key: "vehicle", label: "إعلانات المركبات" },
       { key: "marketing-materials", label: "تصميم وإنتاج المواد التسويقية" },
       { key: "design", label: "تصميم" },
