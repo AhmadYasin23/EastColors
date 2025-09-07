@@ -85,6 +85,7 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
             </h3>
           </div>
 
+          {/* Logos Carousel */}
           {sliderVisible && (
             <Slider
               className="relative bg-white/10 backdrop-blur-sm rounded-2xl py-8"
@@ -100,12 +101,22 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
               {logos.map((logo, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-center w-full h-32 md:h-32 lg:h-36 px-2"
+                  className="
+          flex items-center justify-center
+          px-6
+          h-[120px] md:h-[150px] lg:h-[180px]   /* BIGGER slide box height */
+        "
                 >
                   <img
-                    src={`${logo.logoUrl}?h=140&fit=max`}
+                    src={`${logo.logoUrl}?h=360&fit=max&auto=format`} /* request larger asset */
                     alt={logo.name}
-                    className="max-h-full max-w-full object-contain pt-6 m-2"
+                    className="
+            block
+            h-full w-auto                       /* scale logo to full height */
+            object-contain
+          "
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
               ))}
