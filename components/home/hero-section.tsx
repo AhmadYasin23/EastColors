@@ -47,20 +47,16 @@ export function HeroSection() {
             dir={language === "ar" ? "rtl" : "ltr"}
           >
             <div className="space-y-4">
-              <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-100 to-indigo-100 rounded-full">
-                <Palette className="w-4 h-4 text-pink-600 mr-2" />
+              <div className="inline-flex items-center px-4 py-2 rounded-full">
+                <Palette className="w-4 h-4 mr-2" />
                 <span className="text-sm font-medium text-gray-700">
                   {content[language].badge}
                 </span>
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
-                <span className="bg-gradient-to-r from-pink-600 to-indigo-600 bg-clip-text text-transparent">
-                  {content[language].title}
-                </span>
-                <br />
+              <h1 className="text-3xl md:text-6xl font-bold text-gray-900 leading-tight">
                 <span className="text-gray-800">
-                  {content[language].subtitle}
+                  {content[language].title} {content[language].subtitle}
                 </span>
               </h1>
 
@@ -98,20 +94,15 @@ export function HeroSection() {
             <div className="relative z-10">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
                 <CardContent className="p-8">
-                  <div className="aspect-square bg-gradient-to-br from-pink-500 via-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Palette className="w-10 h-10" />
-                      </div>
-                      <h3 className="text-xl font-bold mb-2">
-                        {language === "ar" ? "ألوان الشرق" : "East Colors"}
-                      </h3>
-                      <p className="text-sm opacity-90">
-                        {language === "ar"
-                          ? "إبداع • دقة • جودة"
-                          : "Creativity • Precision • Quality"}
-                      </p>
-                    </div>
+                  <div className="aspect-square bg-gradient-to-br from-pink-500 via-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center overflow-hidden">
+                    <video
+                      src="/brand_video.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover rounded-2xl"
+                    />
                   </div>
                 </CardContent>
               </Card>
