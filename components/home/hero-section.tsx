@@ -54,7 +54,7 @@ export function HeroSection() {
                 </span>
               </div>
 
-              <h1 className="text-3xl md:text-6xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-2xl md:text-4xl font-bold text-gray-900 leading-tight">
                 <span className="text-gray-800">
                   {content[language].title} {content[language].subtitle}
                 </span>
