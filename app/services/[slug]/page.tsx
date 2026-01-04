@@ -15,7 +15,9 @@ export async function generateStaticParams(): Promise<Props["params"][]> {
   return slugs;
 }
 
-export default async function ServicePage({ params: { slug } }: Props) {
+export default async function ServicePage({ params }: Props) {
+  const { slug } = await params;
+
   // fetch service from Sanity as before …
   const query = groq`
   *[_type == "service" && slug.current == $slug][0] {

@@ -16,7 +16,9 @@ export async function generateStaticParams(): Promise<Props["params"][]> {
   return slugs;
 }
 
-export default async function ProjectPage({ params: { slug } }: Props) {
+export default async function ProjectPage({ params }: Props) {
+  const { slug } = await params;
+
   const query = groq`
     *[_type=="project" && slug.current == $slug][0] {
       title{ ar, en },
@@ -41,7 +43,7 @@ export default async function ProjectPage({ params: { slug } }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      <Navbar />
       <main>
         <ProjectDetails project={project} />
       </main>
