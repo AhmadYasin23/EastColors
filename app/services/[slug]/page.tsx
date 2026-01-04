@@ -10,7 +10,7 @@ type Props = { params: { slug: string } };
 
 export async function generateStaticParams(): Promise<Props["params"][]> {
   const slugs: { slug: string }[] = await client.fetch(
-    groq`*[_type=="project" && defined(slug.current)]{ "slug": slug.current }`
+    groq`*[_type=="service" && defined(slug.current)]{ "slug": slug.current }`
   );
   return slugs;
 }
