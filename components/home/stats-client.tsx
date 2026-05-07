@@ -1,11 +1,9 @@
 // components/home/StatsClient.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Slider from "infinite-react-carousel";
+import React from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { Briefcase, Clock, Users } from "lucide-react";
-import useSlidesToShow from "@/hooks/useSlidesToShow";
 
 interface Logo {
   name: string;
@@ -16,11 +14,8 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
   if (!logos || logos.length === 0) return null;
 
   const { language } = useLanguage();
-  const slidesToShow = useSlidesToShow(); // ← always called
-  const [sliderVisible, setSliderVisible] = useState(false);
-  useEffect(() => {
-    setSliderVisible(true);
-  }, []);
+  const marqueeLogos = [...logos, ...logos];
+  const marqueeDuration = Math.max(18, logos.length * 4);
 
   const content = {
     ar: {
@@ -85,43 +80,32 @@ export default function StatsClient({ logos }: { logos: Logo[] }) {
             </h3>
           </div>
 
-          {/* Logos Carousel */}
-          {sliderVisible && (
-            <Slider
-              className="relative bg-white/10 backdrop-blur-sm rounded-2xl py-8"
-              slidesToShow={slidesToShow}
-              autoplay
-              autoplaySpeed={3000}
-              duration={2000}
-              arrows={false}
-              dots={false}
-              pauseOnHover={false}
-              swipe={false}
+          <div className="relative overflow-hidden rounded-2xl bg-white/10 py-8 backdrop-blur-sm">
+            <div
+              className="stats-marquee-track"
+              style={
+                {
+                  "--stats-marquee-duration": `${marqueeDuration}s`,
+                } as React.CSSProperties
+              }
             >
-              {logos.map((logo, i) => (
+              {marqueeLogos.map((logo, i) => (
                 <div
-                  key={i}
-                  className="
-          flex items-center justify-center
-          px-6
-          h-[120px] md:h-[150px] lg:h-[180px]   /* BIGGER slide box height */
-        "
+                  key={`${logo.name}-${i}`}
+                  className="stats-marquee-item flex h-[120px] items-center justify-center px-6 md:h-[150px] lg:h-[180px]"
+                  aria-hidden={i >= logos.length}
                 >
                   <img
-                    src={`${logo.logoUrl}?h=360&fit=max&auto=format`} /* request larger asset */
+                    src={`${logo.logoUrl}?h=360&fit=max&auto=format`}
                     alt={logo.name}
-                    className="
-            block
-            h-full w-auto                       /* scale logo to full height */
-            object-contain
-          "
+                    className="block h-full w-auto object-contain"
                     loading="lazy"
                     decoding="async"
                   />
                 </div>
               ))}
-            </Slider>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </section>

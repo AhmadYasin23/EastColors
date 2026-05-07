@@ -99,4 +99,33 @@
   line-height: 1.7;
 }
 
-.infinite-react-carousel .carousel-track > * { line-height: 0; }
+.stats-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: stats-marquee-scroll var(--stats-marquee-duration, 24s) linear infinite;
+  will-change: transform;
+}
+
+.stats-marquee-item {
+  flex: 0 0 auto;
+}
+
+.stats-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes stats-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-marquee-track {
+    animation: none;
+  }
+}
