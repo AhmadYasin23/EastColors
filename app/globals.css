@@ -110,10 +110,6 @@
   flex: 0 0 auto;
 }
 
-.stats-marquee-track:hover {
-  animation-play-state: paused;
-}
-
 @keyframes stats-marquee-scroll {
   from {
     transform: translateX(0);
