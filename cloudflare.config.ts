@@ -1,4 +1,4 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, triggers } from "cf/config";
 
 const publicValue = (name: string) => process.env[name] ?? "";
 
@@ -10,9 +10,19 @@ export default defineConfig({
     compatibilityFlags: ["nodejs_compat"],
     workersDev: true,
     previewUrls: false,
+    triggers: [
+      triggers.fetch({
+        pattern: "alwanalsharq.com/*",
+        zone: "alwanalsharq.com",
+      }),
+      triggers.fetch({
+        pattern: "www.alwanalsharq.com/*",
+        zone: "alwanalsharq.com",
+      }),
+    ],
     assets: {
       notFoundHandling: "none",
-      runWorkerFirst: ["/_vinext/static-cache/*"],
+      runWorkerFirst: true,
     },
     observability: {
       enabled: true,
@@ -31,13 +41,7 @@ export default defineConfig({
     },
     env: {
       ASSETS: bindings.assets(),
-      DATABASE_URL: bindings.secret(),
-      MAILJET_API_KEY: bindings.secret(),
-      MAILJET_SECRET_KEY: bindings.secret(),
-      MAILJET_FROM_EMAIL: bindings.secret(),
-      MAILJET_TO_EMAIL: bindings.secret(),
       MAILJET_TO_NAME: bindings.text("East Colors Team"),
-      TURNSTILE_SECRET_KEY: bindings.secret(),
       TURNSTILE_ALLOWED_HOSTNAMES: bindings.text(
         "alwanalsharq.com,www.alwanalsharq.com",
       ),
