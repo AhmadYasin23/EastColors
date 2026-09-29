@@ -25,8 +25,9 @@ export function DynamicTestimonials() {
     async function fetchTestimonials() {
       try {
         const response = await fetch("/api/testimonials")
-        const data = await response.json()
-        setTestimonials(data)
+        if (!response.ok) throw new Error(`Testimonials request failed: ${response.status}`)
+        const data: unknown = await response.json()
+        setTestimonials(Array.isArray(data) ? (data as Testimonial[]) : [])
       } catch (error) {
         console.error("Error fetching testimonials:", error)
       } finally {

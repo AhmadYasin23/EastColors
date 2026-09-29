@@ -1,30 +1,45 @@
-// app/actions/job.ts
 "use server";
 
-import Mailjet from "node-mailjet";
 import { createJobApplication, type JobApplicationData } from "@/lib/database";
+import {
+  escapeHtml,
+  getLanguage,
+  getText,
+  isEmail,
+  verifyTurnstile,
+} from "@/lib/form-security";
+import {
+  getMailjetConfig,
+  sendMailjet,
+  type MailjetAttachment,
+  type MailjetMessage,
+} from "@/lib/mailjet";
 
 interface JobResponse {
   success: boolean;
-  message?: string;
-  error?: string;
+  message: string;
   id?: string;
 }
 
+const MAX_CV_SIZE = 5 * 1024 * 1024;
 const I18N = {
   en: {
     fillAll: "Please fill in all required fields",
     invalidEmail: "Please enter a valid email address",
-    dbError:
-      "An error occurred while submitting your application. Please try again.",
-    success:
-      "Your application has been submitted successfully. We will contact you soon.",
+    invalidFile: "Please upload a valid PDF, DOC, or DOCX file up to 5 MB",
+    verification: "We could not verify your request. Please try again.",
+    unavailable: "Applications are temporarily unavailable. Please try again later.",
+    dbError: "An error occurred while submitting your application. Please try again.",
+    success: "Your application has been submitted successfully. We will contact you soon.",
     hrSubject: "New Job Application: {{job_title}}",
     applicantSubject: "Your Application for {{job_title}}",
   },
   ar: {
     fillAll: "يرجى ملء جميع الحقول المطلوبة",
     invalidEmail: "يرجى إدخال بريد إلكتروني صحيح",
+    invalidFile: "يرجى رفع ملف PDF أو DOC أو DOCX صالح بحجم لا يتجاوز 5 ميجابايت",
+    verification: "تعذر التحقق من الطلب. يرجى المحاولة مرة أخرى.",
+    unavailable: "خدمة التقديم غير متاحة مؤقتًا. يرجى المحاولة لاحقًا.",
     dbError: "حدث خطأ أثناء إرسال طلبك. حاول مرة أخرى لاحقًا.",
     success: "تم إرسال طلبك بنجاح. سنتواصل معك قريبًا.",
     hrSubject: "طلب توظيف جديد: {{job_title}}",
@@ -32,178 +47,147 @@ const I18N = {
   },
 };
 
-export async function submitJobApplication(
-  formData: FormData
-): Promise<JobResponse> {
-  // 1. Extract & encode CV
-  const cvFile = formData.get("cv_file") as File | null;
-  let attachment:
-    | { ContentType: string; Filename: string; Base64Content: string }
-    | undefined;
+function hasPrefix(bytes: Uint8Array, prefix: number[]): boolean {
+  return prefix.every((value, index) => bytes[index] === value);
+}
 
-  if (cvFile && cvFile.size) {
-    const buf = Buffer.from(await cvFile.arrayBuffer());
-    attachment = {
-      ContentType: cvFile.type,
-      Filename: cvFile.name,
-      Base64Content: buf.toString("base64"),
-    };
-  }
+async function prepareAttachment(file: File): Promise<MailjetAttachment | null> {
+  if (!file.size) return null;
+  if (file.size > MAX_CV_SIZE) throw new Error("invalid-cv");
 
-  // 2. Build data object
-  const data: JobApplicationData = {
-    job_id: formData.get("job_id") as string,
-    job_title: formData.get("job_title") as string,
-    applicant_name: formData.get("applicant_name") as string,
-    email: formData.get("email") as string,
-    phone: formData.get("phone") as string,
-    experience_years:
-      Number.parseInt(formData.get("experience_years") as string) || undefined,
-    current_position: formData.get("current_position") as string,
-    cover_letter: formData.get("cover_letter") as string,
-    language: (formData.get("language") as "ar" | "en") || "ar",
+  const extension = file.name.toLowerCase().match(/\.(pdf|doc|docx)$/)?.[1];
+  if (!extension) throw new Error("invalid-cv");
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const valid =
+    (extension === "pdf" && hasPrefix(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])) ||
+    (extension === "doc" &&
+      hasPrefix(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) ||
+    (extension === "docx" &&
+      (hasPrefix(bytes, [0x50, 0x4b, 0x03, 0x04]) ||
+        hasPrefix(bytes, [0x50, 0x4b, 0x05, 0x06]) ||
+        hasPrefix(bytes, [0x50, 0x4b, 0x07, 0x08])));
+
+  if (!valid) throw new Error("invalid-cv");
+
+  const contentTypes = {
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  } as const;
+  const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120);
+
+  return {
+    ContentType: contentTypes[extension],
+    Filename: safeFilename || `resume.${extension}`,
+    Base64Content: Buffer.from(bytes).toString("base64"),
   };
-  const t = I18N[data.language] || I18N.en;
+}
 
-  // 3. Validation
+export async function submitJobApplication(
+  formData: FormData,
+): Promise<JobResponse> {
+  const language = getLanguage(formData);
+  const t = I18N[language];
+
+  if (!(await verifyTurnstile(formData, "job_application"))) {
+    return { success: false, message: t.verification };
+  }
+
+  const data: JobApplicationData = {
+    job_id: getText(formData, "job_id", 128),
+    job_title: getText(formData, "job_title", 120),
+    applicant_name: getText(formData, "applicant_name", 100),
+    email: getText(formData, "email", 254),
+    phone: getText(formData, "phone", 50),
+    experience_years: Math.min(
+      50,
+      Math.max(0, Number.parseInt(getText(formData, "experience_years", 2)) || 0),
+    ),
+    current_position: getText(formData, "current_position", 120),
+    cover_letter: getText(formData, "cover_letter", 5000),
+    language,
+  };
+
   if (!data.applicant_name || !data.email || !data.job_title) {
-    return { success: false, error: t.fillAll };
+    return { success: false, message: t.fillAll };
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-    return { success: false, error: t.invalidEmail };
-  }
-
-  const {
-    MAILJET_API_KEY,
-    MAILJET_SECRET_KEY,
-    MAILJET_FROM_EMAIL,
-    MAILJET_TO_EMAIL,
-  } = process.env;
-  if (
-    !MAILJET_API_KEY ||
-    !MAILJET_SECRET_KEY ||
-    !MAILJET_FROM_EMAIL ||
-    !MAILJET_TO_EMAIL
-  ) {
-    console.error(
-      "Missing Mailjet config: set API_KEY, SECRET_KEY, FROM_EMAIL & HR_EMAIL"
-    );
+  if (!isEmail(data.email)) {
+    return { success: false, message: t.invalidEmail };
   }
 
-  // pick font & dir
+  const mailjet = getMailjetConfig();
+  if (!mailjet || !process.env.DATABASE_URL) {
+    console.error(JSON.stringify({ message: "Job applications are not configured" }));
+    return { success: false, message: t.unavailable };
+  }
+
+  let attachment: MailjetAttachment | null = null;
+  try {
+    const cvFile = formData.get("cv_file");
+    if (cvFile instanceof File) attachment = await prepareAttachment(cvFile);
+  } catch {
+    return { success: false, message: t.invalidFile };
+  }
+
+  const safe = {
+    jobTitle: escapeHtml(data.job_title),
+    applicantName: escapeHtml(data.applicant_name),
+    email: escapeHtml(data.email),
+    phone: escapeHtml(data.phone || ""),
+    currentPosition: escapeHtml(data.current_position || ""),
+    coverLetter: escapeHtml(data.cover_letter || ""),
+  };
+  const subjectJobTitle = data.job_title.replace(/[\r\n]+/g, " ");
   const fontFamily =
-    data.language === "ar"
+    language === "ar"
       ? "'Tajawal', Cairo, 'Noto Kufi Arabic', sans-serif"
       : "Inter, Poppins, Montserrat, 'Open Sans', sans-serif";
-  const dir = data.language === "ar" ? "rtl" : "ltr";
+  const dir = language === "ar" ? "rtl" : "ltr";
+
+  const hrMessage: MailjetMessage = {
+    From: { Email: mailjet.fromEmail, Name: "Job Application" },
+    To: [{ Email: mailjet.toEmail, Name: mailjet.toName }],
+    Subject: t.hrSubject.replace("{{job_title}}", subjectJobTitle),
+    TextPart: `New application for ${data.job_title}\n\nName: ${data.applicant_name}\nEmail: ${data.email}\nPhone: ${data.phone || ""}\nExperience: ${data.experience_years ?? 0} years\nCurrent Position: ${data.current_position || ""}\n\nCover Letter:\n${data.cover_letter || ""}`,
+    HTMLPart: `
+<div style="font-family:${fontFamily};direction:${dir};color:#1f2937">
+  <h2>New Job Application: ${safe.jobTitle}</h2>
+  <ul>
+    <li><strong>Name:</strong> ${safe.applicantName}</li>
+    <li><strong>Email:</strong> ${safe.email}</li>
+    <li><strong>Phone:</strong> ${safe.phone}</li>
+    <li><strong>Experience:</strong> ${data.experience_years ?? 0} years</li>
+    <li><strong>Current Position:</strong> ${safe.currentPosition}</li>
+  </ul>
+  <h3>Cover Letter</h3>
+  <p style="white-space:pre-wrap">${safe.coverLetter}</p>
+</div>`.trim(),
+    ...(attachment ? { Attachments: [attachment] } : {}),
+  };
+
+  const applicantMessage: MailjetMessage = {
+    From: { Email: mailjet.fromEmail, Name: "Job Application at East Colors" },
+    To: [{ Email: data.email, Name: data.applicant_name.replace(/[\r\n]+/g, " ") }],
+    Subject: t.applicantSubject.replace("{{job_title}}", subjectJobTitle),
+    TextPart: `Thanks ${data.applicant_name},\n\n${t.success}`,
+    HTMLPart: `<div style="font-family:${fontFamily};direction:${dir};color:#000"><p>Thanks <strong>${safe.applicantName}</strong>,</p><p>${t.success}</p></div>`,
+  };
 
   try {
-    // 4. Save to DB
     const result = await createJobApplication(data);
-
-    // 5. Init Mailjet
-    const mj = Mailjet.apiConnect(MAILJET_API_KEY!, MAILJET_SECRET_KEY!);
-
-    // 6. HR notification
-    // Build the HR notification message
-    const hrMessage: any = {
-      From: {
-        Email: MAILJET_FROM_EMAIL!,
-        Name: "Job Application",
-      },
-      To: [
-        {
-          Email: MAILJET_TO_EMAIL!,
-          Name: "HR Team",
-        },
-      ],
-      Subject: t.hrSubject.replace("{{job_title}}", data.job_title),
-      TextPart: `
-New application for ${data.job_title}
-
-Name: ${data.applicant_name}
-Email: ${data.email}
-Phone: ${data.phone}
-Experience: ${data.experience_years ?? "N/A"} years
-Current Position: ${data.current_position}
-
-Cover Letter:
-${data.cover_letter}
-  `.trim(),
-      HTMLPart: `
-<div style="background-color:#ec4899; padding:20px; font-family:${fontFamily}; direction:${dir};">
-  <div style="max-width:600px; margin:0 auto; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden;">
-    <div style="background-color:#ec4899; color:#fff; padding:16px;">
-      <h2 style="margin:0; font-size:20px; font-weight:600;">
-        New Job Application: ${data.job_title}
-      </h2>
-    </div>
-    <div style="padding:24px; color:#1F2937; line-height:1.5;">
-      <p style="margin-top:0;">
-        A candidate has applied for the position of <strong>${data.job_title}</strong>:
-      </p>
-      <ul style="list-style:none; padding:0; margin:0 0 16px;">
-        <li><strong>Name:</strong> ${data.applicant_name}</li>
-        <li><strong>Email:</strong> ${data.email}</li>
-        <li><strong>Phone:</strong> ${data.phone}</li>
-        <li><strong>Experience:</strong> ${data.experience_years ?? "N/A"} years</li>
-        <li><strong>Current Position:</strong> ${data.current_position}</li>
-      </ul>
-      <h3 style="margin-bottom:8px; font-size:16px; font-weight:500;">Cover Letter</h3>
-      <p style="margin-top:0; white-space:pre-wrap;">
-        ${data.cover_letter}
-      </p>
-    </div>
-    ${
-      attachment
-        ? `
-    <div style="padding:0 24px 24px;">
-      <p style="margin:0; font-size:14px; color:#4B5563;">
-        📎 Attached: <em>${attachment.Filename}</em>
-      </p>
-    </div>`
-        : ""
-    }
-    <div style="background-color:#F9FAFB; padding:12px; text-align:center; font-size:12px; color:#6B7280;">
-      © ${new Date().getFullYear()} Your Company Name
-    </div>
-  </div>
-</div>
-  `.trim(),
-    };
-
-    if (attachment) {
-      hrMessage.Attachments = [attachment];
-    }
-
-    if (attachment) hrMessage.Attachments = [attachment];
-    await mj
-      .post("send", { version: "v3.1" })
-      .request({ Messages: [hrMessage] });
-
-    // 7. Applicant confirmation
-    const appMessage: any = {
-      From: {
-        Email: MAILJET_FROM_EMAIL!,
-        Name: "Job Application at East Colors",
-      },
-      To: [{ Email: data.email, Name: data.applicant_name }],
-      Subject: t.applicantSubject.replace("{{job_title}}", data.job_title),
-      TextPart: `Thanks ${data.applicant_name},\n\n${t.success}`,
-      HTMLPart: `
-<div style="font-family: ${fontFamily}; direction: ${dir}; color: #000;">
-  <p>Thanks <strong>${data.applicant_name}</strong>,</p>
-  <p>${t.success}</p>
-</div>
-      `.trim(),
-    };
-    await mj
-      .post("send", { version: "v3.1" })
-      .request({ Messages: [appMessage] });
-
+    await sendMailjet(mailjet.apiKey, mailjet.secretKey, [
+      hrMessage,
+      applicantMessage,
+    ]);
     return { success: true, message: t.success, id: result.id };
-  } catch (err) {
-    console.error("Job application submission error:", err);
-    return { success: false, error: t.dbError };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        message: "Job application submission failed",
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
+    return { success: false, message: t.dbError };
   }
 }

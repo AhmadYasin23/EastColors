@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
 import { submitNewsletterSubscription } from "@/app/actions/contact"
+import { Turnstile } from "@/components/turnstile"
 
 export function NewsletterSignup() {
   const { language } = useLanguage()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [turnstileAttempt, setTurnstileAttempt] = useState(0)
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const content = {
@@ -52,6 +54,7 @@ export function NewsletterSignup() {
         message: "An unexpected error occurred. Please try again.",
       })
     } finally {
+      setTurnstileAttempt((attempt) => attempt + 1)
       setIsSubmitting(false)
     }
   }
@@ -72,6 +75,7 @@ export function NewsletterSignup() {
             <Input
               type="email"
               name="email"
+              maxLength={254}
               placeholder={content[language].placeholder}
               className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/70"
               required
@@ -87,6 +91,8 @@ export function NewsletterSignup() {
               {isSubmitting ? content[language].submitting : content[language].submit}
             </Button>
           </div>
+
+          <Turnstile action="newsletter" resetSignal={turnstileAttempt} />
 
           {submitResult && (
             <div className={`text-sm p-2 rounded ${submitResult.success ? "bg-green-500/20" : "bg-red-500/20"}`}>

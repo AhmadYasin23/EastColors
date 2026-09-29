@@ -35,9 +35,10 @@ export function ClientsTestimonialsSection() {
     async function fetchClients() {
       try {
         const response = await fetch("/api/sanity/clients")
-        const data = await response.json()
+        if (!response.ok) throw new Error(`Clients request failed: ${response.status}`)
+        const data: unknown = await response.json()
         // Filter clients that have testimonials
-        const clientsWithTestimonials = data.filter((client: Client) => client.testimonial?.quote?.[language])
+        const clientsWithTestimonials = (Array.isArray(data) ? (data as Client[]) : []).filter((client) => client.testimonial?.quote?.[language])
         setClients(clientsWithTestimonials)
       } catch (error) {
         console.error("Error fetching clients:", error)

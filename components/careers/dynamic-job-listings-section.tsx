@@ -76,8 +76,9 @@ export function DynamicJobListingsSection() {
     async function fetchJobs() {
       try {
         const response = await fetch("/api/sanity/jobs")
-        const data = await response.json()
-        setJobs(data)
+        if (!response.ok) throw new Error(`Jobs request failed: ${response.status}`)
+        const data: unknown = await response.json()
+        setJobs(Array.isArray(data) ? (data as Job[]) : [])
       } catch (error) {
         console.error("Error fetching jobs:", error)
       } finally {

@@ -66,8 +66,9 @@ export function DynamicPortfolioGrid() {
     async function fetchProjects() {
       try {
         const response = await fetch("/api/sanity/projects");
-        const data = await response.json();
-        setProjects(data);
+        if (!response.ok) throw new Error(`Projects request failed: ${response.status}`);
+        const data: unknown = await response.json();
+        setProjects(Array.isArray(data) ? (data as Project[]) : []);
       } catch (error) {
         console.error("Error fetching projects:", error);
       } finally {

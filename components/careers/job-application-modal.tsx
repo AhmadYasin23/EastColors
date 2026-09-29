@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/language-context";
 import { submitJobApplication } from "@/app/actions/jobs";
+import { Turnstile } from "@/components/turnstile";
 
 interface JobApplicationModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function JobApplicationModal({
 }: JobApplicationModalProps) {
   const { language } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileAttempt, setTurnstileAttempt] = useState(0);
   const [submitResult, setSubmitResult] = useState<
     { success: boolean; message: string } | null
   >(null);
@@ -120,6 +122,7 @@ export function JobApplicationModal({
         message: "An unexpected error occurred. Please try again.",
       });
     } finally {
+      setTurnstileAttempt((attempt) => attempt + 1);
       setIsSubmitting(false);
     }
   }
@@ -166,6 +169,7 @@ export function JobApplicationModal({
                 </label>
                 <Input
                   name="applicant_name"
+                  maxLength={100}
                   placeholder={content[language].placeholders.name}
                   required
                   disabled={isSubmitting}
@@ -178,6 +182,7 @@ export function JobApplicationModal({
                 <Input
                   type="email"
                   name="email"
+                  maxLength={254}
                   placeholder={content[language].placeholders.email}
                   required
                   disabled={isSubmitting}
@@ -193,6 +198,7 @@ export function JobApplicationModal({
                 </label>
                 <Input
                   name="phone"
+                  maxLength={50}
                   placeholder={content[language].placeholders.phone}
                   disabled={isSubmitting}
                 />
@@ -219,6 +225,7 @@ export function JobApplicationModal({
               </label>
               <Input
                 name="current_position"
+                maxLength={120}
                 placeholder={content[language].placeholders.currentPosition}
                 disabled={isSubmitting}
               />
@@ -241,6 +248,7 @@ export function JobApplicationModal({
                     <Input
                       type="file"
                       name="cv_file"
+                      required
                       accept=".pdf,.doc,.docx"
                       className="hidden"
                       id="cv-upload"
@@ -297,11 +305,14 @@ export function JobApplicationModal({
               </label>
               <Textarea
                 name="cover_letter"
+                maxLength={5000}
                 placeholder={content[language].placeholders.coverLetter}
                 rows={4}
                 disabled={isSubmitting}
               />
             </div>
+
+            <Turnstile action="job_application" resetSignal={turnstileAttempt} />
 
             {/* Submit Result */}
             {submitResult && (

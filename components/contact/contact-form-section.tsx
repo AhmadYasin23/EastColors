@@ -8,10 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/language-context";
 import { submitContactForm } from "@/app/actions/contact";
+import { Turnstile } from "@/components/turnstile";
 
 export function ContactFormSection() {
   const { language } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileAttempt, setTurnstileAttempt] = useState(0);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const content = {
@@ -87,6 +89,7 @@ export function ContactFormSection() {
             : "An unexpected error occurred. Please try again.",
       });
     } finally {
+      setTurnstileAttempt((attempt) => attempt + 1);
       setIsSubmitting(false);
     }
   }
@@ -118,6 +121,7 @@ export function ContactFormSection() {
                 </label>
                 <Input
                   name="name"
+                  maxLength={100}
                   placeholder={content[language].form.name}
                   required
                   disabled={isSubmitting}
@@ -136,6 +140,7 @@ export function ContactFormSection() {
                 <Input
                   type="email"
                   name="email"
+                  maxLength={254}
                   placeholder={content[language].form.email}
                   required
                   disabled={isSubmitting}
@@ -155,6 +160,7 @@ export function ContactFormSection() {
                 </label>
                 <Input
                   name="phone"
+                  maxLength={50}
                   placeholder={content[language].form.phone}
                   disabled={isSubmitting}
                 />
@@ -167,6 +173,7 @@ export function ContactFormSection() {
                 </label>
                 <Input
                   name="company"
+                  maxLength={100}
                   placeholder={content[language].form.company}
                   disabled={isSubmitting}
                 />
@@ -198,6 +205,7 @@ export function ContactFormSection() {
               </label>
               <Textarea
                 name="message"
+                maxLength={5000}
                 placeholder={content[language].form.message}
                 rows={5}
                 required
@@ -208,6 +216,8 @@ export function ContactFormSection() {
                 onInput={(e) => e.currentTarget.setCustomValidity("")}
               />
             </div>
+
+            <Turnstile action="contact" resetSignal={turnstileAttempt} />
 
             {/* Result Banner */}
             {submitResult && (

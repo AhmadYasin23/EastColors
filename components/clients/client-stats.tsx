@@ -5,14 +5,18 @@ import { client } from "@/sanity/lib/client"
 import ClientsGridSection from "./clients-grid-section";
 
 export default async function StatsSection() {
-  // Fetch only plain data: name & URL
-  const logos: Array<{ name: string; logoUrl: string }> = await client.fetch(
-    groq`*[_type == "clientLogo"] | order(orderAsc){
-      name,
-      "logoUrl": logo.asset->url
-    }`
-  )
+  let logos: Array<{ name: string; logoUrl: string }> = []
 
-  // Pass only that array into the client
+  try {
+    logos = await client.fetch(
+      groq`*[_type == "clientLogo"] | order(orderAsc){
+        name,
+        "logoUrl": logo.asset->url
+      }`
+    )
+  } catch (error) {
+    console.error("Unable to load client logos", error)
+  }
+
   return <ClientsGridSection logos={logos} />
 }

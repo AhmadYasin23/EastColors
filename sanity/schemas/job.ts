@@ -263,7 +263,6 @@ export default defineType({
       return {
         title,
         subtitle: `${department} ${featured ? "• Featured" : ""} ${!active ? "• Inactive" : ""}`,
-        media: selection.media,
       }
     },
   },
