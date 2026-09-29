@@ -5,7 +5,7 @@ const publicValue = (name: string) => process.env[name] ?? "";
 export default defineConfig({
   worker: defineWorker({
     name: "eastcolors-v1-0",
-    entrypoint: "vinext/server/fetch-handler",
+    entrypoint: "./worker.ts",
     compatibilityDate: "2026-09-29",
     compatibilityFlags: ["nodejs_compat"],
     workersDev: true,
@@ -46,7 +46,7 @@ export default defineConfig({
         "alwanalsharq.com,www.alwanalsharq.com",
       ),
       NEXT_PUBLIC_SANITY_PROJECT_ID: bindings.text(
-        publicValue("NEXT_PUBLIC_SANITY_PROJECT_ID"),
+        publicValue("NEXT_PUBLIC_SANITY_PROJECT_ID") || "wm5l3itn",
       ),
       NEXT_PUBLIC_SANITY_DATASET: bindings.text(
         publicValue("NEXT_PUBLIC_SANITY_DATASET") || "production",
